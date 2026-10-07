@@ -3,14 +3,20 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import RaceScrollbar from '#lib/components/RaceScrollbar.svelte';
 	import SiteSwitch from '#lib/components/SiteSwitch.svelte';
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 
 	let { children } = $props();
 
+	// Phones: the links live in a drop-down behind the burger button (same as reg58.me)
+	let menuOpen = $state(false);
+	let header: HTMLElement;
+	afterNavigate(() => (menuOpen = false));
+
 	const nav = [
-		{ href: '/', label: 'Next race', short: 'Next' },
-		{ href: '/calendar', label: 'Calendar', short: 'Calendar' },
-		{ href: '/laps', label: 'Lap charts', short: 'Laps' }
+		{ href: '/', label: 'Next race' },
+		{ href: '/calendar', label: 'Calendar' },
+		{ href: '/laps', label: 'Lap charts' }
 	];
 
 	const current = (href: string) =>
@@ -25,24 +31,36 @@
 	/>
 </svelte:head>
 
+<svelte:window
+	onkeydown={(e) => e.key === 'Escape' && (menuOpen = false)}
+	onclick={(e) => menuOpen && !header.contains(e.target as Node) && (menuOpen = false)}
+/>
+
 <RaceScrollbar />
 
-<header data-site-header>
+<header data-site-header bind:this={header}>
 	<div class="container bar">
 		<a class="logo" href="/">
 			<img src={favicon} alt="" width="34" height="34" />
 			<span class="name">F1 Tools</span>
 		</a>
-		<nav>
+		<nav id="site-nav" class:open={menuOpen}>
 			{#each nav as item}
-				<a href={item.href} aria-current={current(item.href) ? 'page' : undefined}>
-					<span class="long">{item.label}</span><span class="short" aria-hidden="true"
-						>{item.short}</span
-					>
-				</a>
+				<a href={item.href} aria-current={current(item.href) ? 'page' : undefined}>{item.label}</a>
 			{/each}
 			<SiteSwitch current="f1" />
 		</nav>
+		<button
+			class="burger"
+			aria-label="Menu"
+			aria-controls="site-nav"
+			aria-expanded={menuOpen}
+			onclick={() => (menuOpen = !menuOpen)}
+		>
+			<span></span>
+			<span></span>
+			<span></span>
+		</button>
 	</div>
 </header>
 
@@ -136,32 +154,85 @@
 		background: var(--navy);
 	}
 
-	.short {
+	.burger {
 		display: none;
 	}
 
-	/* Narrow phones: shorter link labels (screen readers still get the full ones) */
-	@media (max-width: 420px) {
-		.long {
-			position: absolute;
-			width: 1px;
-			height: 1px;
-			overflow: hidden;
-			clip: rect(0 0 0 0);
+	/*
+	 * Phones: one row with the logo and a burger button. The links drop down below the bar,
+	 * full width, with the site switch at the bottom. Same as reg58.me.
+	 */
+	@media (max-width: 640px) {
+		.burger {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			gap: 5px;
+			width: 40px;
+			height: 40px;
+			padding: 0 9px;
+			border: 0;
+			border-radius: 8px;
+			background: none;
+			cursor: pointer;
 		}
-		.short {
-			display: inline;
-		}
-	}
 
-	/* On phones, keep just the icon so the links and the switch fit */
-	@media (max-width: 560px) {
-		.logo .name {
-			display: none;
+		.burger:hover,
+		.burger[aria-expanded='true'] {
+			background: rgb(11 23 34 / 0.12);
 		}
+
+		.burger span {
+			display: block;
+			height: 3px;
+			border-radius: 2px;
+			background: var(--navy);
+			transition:
+				transform 0.2s,
+				opacity 0.2s;
+		}
+
+		/* The three bars fold into an X while the menu is open */
+		.burger[aria-expanded='true'] span:nth-child(1) {
+			transform: translateY(8px) rotate(45deg);
+		}
+		.burger[aria-expanded='true'] span:nth-child(2) {
+			opacity: 0;
+		}
+		.burger[aria-expanded='true'] span:nth-child(3) {
+			transform: translateY(-8px) rotate(-45deg);
+		}
+
+		nav {
+			display: none;
+			position: absolute;
+			top: 100%;
+			left: 0;
+			right: 0;
+			/* Sit under the header's navy stripe */
+			margin-top: 4px;
+			flex-direction: column;
+			align-items: stretch;
+			gap: 2px;
+			padding: 8px 16px 12px;
+			background: var(--gulf-orange);
+			border-bottom: 4px solid var(--navy);
+			box-shadow: var(--shadow);
+		}
+
+		nav.open {
+			display: flex;
+		}
+
 		nav a {
-			padding: 6px 7px;
-			font-size: 0.88rem;
+			padding: 10px 12px;
+			font-size: 1rem;
+		}
+
+		/* The site switch sits at the bottom of the menu */
+		nav :global(.switch) {
+			align-self: flex-start;
+			margin: 10px 0 0 12px;
 		}
 	}
 
