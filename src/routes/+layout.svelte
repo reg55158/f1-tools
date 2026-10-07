@@ -1,14 +1,16 @@
 <script lang="ts">
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
+	import RaceScrollbar from '#lib/components/RaceScrollbar.svelte';
+	import SiteSwitch from '#lib/components/SiteSwitch.svelte';
 	import { page } from '$app/state';
 
 	let { children } = $props();
 
 	const nav = [
-		{ href: '/', label: 'Next race' },
-		{ href: '/calendar', label: 'Calendar' },
-		{ href: '/laps', label: 'Lap charts' }
+		{ href: '/', label: 'Next race', short: 'Next' },
+		{ href: '/calendar', label: 'Calendar', short: 'Calendar' },
+		{ href: '/laps', label: 'Lap charts', short: 'Laps' }
 	];
 
 	const current = (href: string) =>
@@ -23,16 +25,23 @@
 	/>
 </svelte:head>
 
+<RaceScrollbar />
+
 <header data-site-header>
 	<div class="container bar">
 		<a class="logo" href="/">
 			<img src={favicon} alt="" width="34" height="34" />
-			<span>f1<span class="dim">.reg58.me</span></span>
+			<span class="name">F1 Tools</span>
 		</a>
 		<nav>
 			{#each nav as item}
-				<a href={item.href} aria-current={current(item.href) ? 'page' : undefined}>{item.label}</a>
+				<a href={item.href} aria-current={current(item.href) ? 'page' : undefined}>
+					<span class="long">{item.label}</span><span class="short" aria-hidden="true"
+						>{item.short}</span
+					>
+				</a>
 			{/each}
+			<SiteSwitch current="f1" />
 		</nav>
 	</div>
 </header>
@@ -41,7 +50,7 @@
 	{@render children()}
 </main>
 
-<footer>
+<footer data-site-footer>
 	<div class="container foot">
 		<span>
 			Data from <a href="https://openf1.org" rel="noopener">OpenF1</a>, track maps from
@@ -127,9 +136,27 @@
 		background: var(--navy);
 	}
 
-	/* On phones, keep just the "f1" so the three links fit */
-	@media (max-width: 520px) {
-		.dim {
+	.short {
+		display: none;
+	}
+
+	/* Narrow phones: shorter link labels (screen readers still get the full ones) */
+	@media (max-width: 420px) {
+		.long {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip: rect(0 0 0 0);
+		}
+		.short {
+			display: inline;
+		}
+	}
+
+	/* On phones, keep just the icon so the links and the switch fit */
+	@media (max-width: 560px) {
+		.logo .name {
 			display: none;
 		}
 		nav a {

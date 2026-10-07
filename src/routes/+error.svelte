@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>{page.status} · f1.reg58.me</title>
+	<title>{page.status} · F1 Tools</title>
 </svelte:head>
 
 <div class="container">

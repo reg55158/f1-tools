@@ -20,7 +20,7 @@
 </script>
 
 <svelte:head>
-	<title>{meeting.name} · f1.reg58.me</title>
+	<title>{meeting.name} · F1 Tools</title>
 </svelte:head>
 
 <div class="container">

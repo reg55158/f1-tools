@@ -16,7 +16,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.next ? `${data.next.name} countdown` : 'F1'} · f1.reg58.me</title>
+	<title>{data.next ? `${data.next.name} countdown · F1 Tools` : 'F1 Tools'}</title>
 </svelte:head>
 
 <div class="container grid">

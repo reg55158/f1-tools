@@ -37,7 +37,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.meeting.name} {data.session.name} lap chart · f1.reg58.me</title>
+	<title>{data.meeting.name} {data.session.name} lap chart · F1 Tools</title>
 </svelte:head>
 
 <div class="container">

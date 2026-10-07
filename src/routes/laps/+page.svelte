@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-	<title>Lap charts · f1.reg58.me</title>
+	<title>Lap charts · F1 Tools</title>
 </svelte:head>
 
 <div class="container">
