@@ -78,7 +78,11 @@ handle errors gracefully.
   - home: `s-maxage=60`
   - completed-session pages: `s-maxage=86400`
   - plus an in-memory cache in `src/lib/server/openf1.ts`.
-- Shared types are already in `src/lib/types.ts`.
+- Shared types are in `src/lib/types.ts`.
+- `OPENF1_BASE` (optional env var, see `src/env.ts`) points the server at another OpenF1, e.g. a
+  local mock for testing without network access.
+- When an OpenF1 refresh fails, the in-memory cache serves the last good value for another minute.
+- `fetch` percent-encodes `>`/`<` in the query (`date%3E...`), the same as a browser does.
 
 ## Deploy
 
