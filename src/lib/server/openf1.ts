@@ -6,7 +6,7 @@
 // (OpenF1 can refuse free-tier requests while a session is live), the last good value is served.
 
 import { OPENF1_BASE } from '$app/env/private';
-import type { Driver, LapSeries, Meeting, Result, Session, Track } from '#lib/types.ts';
+import type { Driver, LapSeries, Meeting, Result, Session, Standings, Track } from '#lib/types.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -75,6 +75,15 @@ interface RawLap {
 interface RawLocation {
 	x: number;
 	y: number;
+}
+
+/** `/championship_drivers` and `/championship_teams` (beta): standings after a race or sprint */
+interface RawStanding {
+	driver_number?: number;
+	team_name?: string;
+	position_current: number | null;
+	position_start: number | null;
+	points_current: number | null;
 }
 
 interface RawCircuit {
@@ -324,6 +333,64 @@ export function getResults(session: Session): Promise<Result[]> {
 			}))
 			.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
 	});
+}
+
+// ---------------------------------------------------------------------------------------------
+// Championship standings
+
+/** Standings after the latest finished race or sprint of the season, or null if there are none. */
+export async function getStandings(season: Meeting[]): Promise<Standings | null> {
+	const races = season
+		.flatMap((meeting) => meeting.sessions.map((session) => ({ meeting, session })))
+		.filter(({ session }) => session.type === 'Race' && isDone(session));
+
+	// OpenF1 publishes the standings a little while after the flag, so fall back one race until then
+	for (const { meeting, session } of races.slice(-2).reverse()) {
+		const standings = await cached(`standings:${session.key}`, ttlFor(session), async () => {
+			const [drivers, rawDrivers, rawTeams] = await Promise.all([
+				getDrivers(session),
+				openf1<RawStanding>('/championship_drivers', { session_key: session.key }),
+				openf1<RawStanding>('/championship_teams', { session_key: session.key })
+			]);
+			// Thrown rather than returned, so an empty answer isn't cached for a day
+			if (rawDrivers.length === 0) throw new Error(`No standings after session ${session.key} yet`);
+
+			const change = (s: RawStanding) =>
+				s.position_start !== null && s.position_current !== null
+					? s.position_start - s.position_current
+					: 0;
+			const byPosition = (a: RawStanding, b: RawStanding) =>
+				(a.position_current ?? 999) - (b.position_current ?? 999);
+			// Team colours come from the drivers, since the teams endpoint has none
+			const teamColour = (team: string) =>
+				[...drivers.values()].find((d) => d.team === team)?.colour ?? '#7a8a99';
+
+			return {
+				after: { meetingKey: meeting.key, meetingName: meeting.name, sessionName: session.name },
+				drivers: rawDrivers
+					.filter((s) => s.driver_number !== undefined)
+					.sort(byPosition)
+					.map((s) => ({
+						position: s.position_current ?? 0,
+						driver: drivers.get(s.driver_number!) ?? unknownDriver(s.driver_number!),
+						points: s.points_current ?? 0,
+						change: change(s)
+					})),
+				teams: rawTeams
+					.filter((s) => s.team_name)
+					.sort(byPosition)
+					.map((s) => ({
+						position: s.position_current ?? 0,
+						team: s.team_name!,
+						colour: teamColour(s.team_name!),
+						points: s.points_current ?? 0,
+						change: change(s)
+					}))
+			};
+		}).catch(() => null);
+		if (standings) return standings;
+	}
+	return null;
 }
 
 // ---------------------------------------------------------------------------------------------

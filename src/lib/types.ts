@@ -66,3 +66,26 @@ export interface LapSeries {
 	positions: (number | null)[];
 	pitLaps: number[];
 }
+
+export interface DriverStanding {
+	position: number;
+	driver: Driver;
+	points: number;
+	/** Places gained (+) or lost (−) at the last race */
+	change: number;
+}
+
+export interface TeamStanding {
+	position: number;
+	team: string;
+	colour: string;
+	points: number;
+	change: number;
+}
+
+export interface Standings {
+	/** The race (or sprint) the standings are after, e.g. "Singapore Grand Prix, Race" */
+	after: { meetingKey: number; meetingName: string; sessionName: string };
+	drivers: DriverStanding[];
+	teams: TeamStanding[];
+}

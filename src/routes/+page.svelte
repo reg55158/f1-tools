@@ -2,6 +2,7 @@
 	import { useClock } from '#lib/clock.svelte.ts';
 	import ResultsTable from '#lib/components/ResultsTable.svelte';
 	import SessionList from '#lib/components/SessionList.svelte';
+	import StandingsTable from '#lib/components/StandingsTable.svelte';
 	import TrackMap from '#lib/components/TrackMap.svelte';
 	import { formatCountdown, formatDateRange, formatDateTime, shortName } from '#lib/format.ts';
 	import type { PageProps } from './$types';
@@ -77,6 +78,22 @@
 					>.{/if}
 			</p>
 		</section>
+	{/if}
+
+	{#if data.standings}
+		{@const after = data.standings.after}
+		<section class="card">
+			<h2>Drivers' championship</h2>
+			<StandingsTable drivers={data.standings.drivers} />
+		</section>
+		<section class="card">
+			<h2>Constructors' championship</h2>
+			<StandingsTable teams={data.standings.teams} limit={11} />
+		</section>
+		<p class="after muted">
+			Standings after the <a href="/race/{after.meetingKey}">{after.meetingName}</a
+			>{after.sessionName === 'Race' ? '' : ` ${after.sessionName}`}.
+		</p>
 	{/if}
 
 	{#if data.last}
@@ -161,6 +178,12 @@
 		font-weight: 700;
 		line-height: 1.1;
 		letter-spacing: -0.03em;
+	}
+
+	.after {
+		grid-column: 1 / -1;
+		margin: -8px 0 0;
+		font-size: 0.85rem;
 	}
 
 	.small {
